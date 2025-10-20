@@ -14,16 +14,16 @@ args: ['--no-sandbox', '--disable-setuid-sandbox']
 });
 const page = await browser.newPage();
 
-const blockNumber = generateFakeBlockNumber();
-const gasFee = generateFakeGasFee();
-const timestamp = generateFakeTimestamp();
-const hash = txHash || generateFakeTxHash();
+const blockNumber = generateFakeBlockNumber(token);
+const gasFee = generateFakeGasFee(token);
+const timestamp = generateFakeTimestamp(token);
+const hash = txHash || generateFakeTxHash(token);
 
 const html = `
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Transaction</title>
+<title>${token} Transaction</title>
 <style>
 body { font-family: Arial, sans-serif; margin: 24px; color:#111; }
 .card{ border:1px solid #e5e7eb; border-radius:12px; padding:20px; max-width:720px;}
@@ -47,12 +47,15 @@ code{ background:#f9fafb; padding:2px 6px; border-radius:6px; }
 <div class="row"><div class="label">Gas Fee</div><div>${gasFee} ETH</div></div>
 </div>
 </body>
-</html>`;
+</html>
+`;
 
 await page.setContent(html, { waitUntil: 'networkidle0' });
 const pngBuffer = await page.screenshot({ type: 'png', fullPage: false });
 await browser.close();
-return pngBuffer;
+return pngBuffer; // bot.js sends this with replyWithPhoto
 }
 
+// IMPORTANT: default-export the real function your bot requires
+module.exports = generateFakeExplorerPage;
 module.exports = { generateFakeExplorerPage };
