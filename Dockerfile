@@ -1,20 +1,22 @@
-# Use the latest LTS Node.js image (not Alpine)
 FROM node:18
 
-# Create working directory
 WORKDIR /app
 
-# Copy dependency files
+# Install deps first (faster Docker caching)
 COPY package*.json ./
-
-# Install only production dependencies
 RUN npm install --production
 
-# Copy all app files
+# Install system Chromium + fonts for Puppeteer
+RUN apt-get update && \
+apt-get install -y chromium ca-certificates fonts-liberation && \
+rm -rf /var/lib/apt/lists/*
+
+# Copy the rest of the app
 COPY . .
 
-# Expose Render’s dynamic port
+# Tell Puppeteer where Chromium lives
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 EXPOSE 10000
 
-# Start your bot
 CMD ["node", "bot.js"]
