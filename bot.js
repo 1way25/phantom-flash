@@ -1,7 +1,7 @@
 // bot.js
 const { Telegraf } = require('telegraf');
 const { generateFakeTxHash } = require('./utils');
-const { generateFakeExplorerPage } = require('./fake-explorer'); // returns a PNG Buffer
+module.exports = generateFakeExplorerPage;
 
 // Use the env var you created in Render
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -102,4 +102,5 @@ await ctx.editMessageText('✅ Done');
 });
 
 bot.launch();
+
 console.log('Phantom Flash is running...');
