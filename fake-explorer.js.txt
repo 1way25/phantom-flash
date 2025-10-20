@@ -1,0 +1,19 @@
+// fake-explorer.js
+
+const puppeteer = require('puppeteer');
+const { generateFakeTxHash, generateFakeBlockNumber, generateFakeGasFee, generateFakeTimestamp } = require('./utils');
+
+async function generateFakeExplorerPage(txHash, token, amount, from, to) {
+const browser = await puppeteer.launch({ headless: true });
+const page = await browser.newPage();
+
+const blockNumber = generateFakeBlockNumber();
+const gasFee = generateFakeGasFee();
+const timestamp = generateFakeTimestamp();
+
+const html = `
+<html>
+<head>
+<title>Ethereum Transaction Hash</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px;
