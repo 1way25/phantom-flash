@@ -17,51 +17,45 @@ args: [
 '--disable-dev-shm-usage'
 ]
 });
+
 const page = await browser.newPage();
 
 const blockNumber = generateFakeBlockNumber(token);
 const gasFee = generateFakeGasFee(token);
 const timestamp = generateFakeTimestamp(token);
-const hash = txHash || generateFakeTxHash(token);
 
 const html = `
 <html>
 <head>
-<meta charset="utf-8" />
-<title>${token} Transaction</title>
+<title>${token} Transaction Hash</title>
 <style>
-body { font-family: Arial, sans-serif; margin: 24px; color:#111; }
-.card{ border:1px solid #e5e7eb; border-radius:12px; padding:20px; max-width:720px;}
-h1{ font-size:20px; margin:0 0 12px;}
-.row{ display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f3f4f6;}
-.row:last-child{ border-bottom:0;}
-.label{ color:#6b7280;}
-code{ background:#f9fafb; padding:2px 6px; border-radius:6px; }
+body { font-family: Arial, sans-serif; margin: 20px; }
+.box { border: 1px solid #ddd; padding: 20px; border-radius: 10px; }
+h2 { color: #333; }
+p { font-size: 14px; color: #555; }
 </style>
 </head>
 <body>
-<div class="card">
-<h1>${token} Transaction</h1>
-<div class="row"><div class="label">Hash</div><div><code>${hash}</code></div></div>
-<div class="row"><div class="label">Status</div><div>Success</div></div>
-<div class="row"><div class="label">Block</div><div>${blockNumber}</div></div>
-<div class="row"><div class="label">Timestamp</div><div>${timestamp}</div></div>
-<div class="row"><div class="label">From</div><div><code>${from}</code></div></div>
-<div class="row"><div class="label">To</div><div><code>${to}</code></div></div>
-<div class="row"><div class="label">Amount</div><div>${amount} ${token}</div></div>
-<div class="row"><div class="label">Gas Fee</div><div>${gasFee} ETH</div></div>
+<div class="box">
+<h2>${token} Transaction Successful ✅</h2>
+<p><strong>Hash:</strong> ${txHash}</p>
+<p><strong>From:</strong> ${from}</p>
+<p><strong>To:</strong> ${to}</p>
+<p><strong>Amount:</strong> ${amount} ${token}</p>
+<p><strong>Block:</strong> ${blockNumber}</p>
+<p><strong>Gas Fee:</strong> ${gasFee}</p>
+<p><strong>Timestamp:</strong> ${new Date(timestamp * 1000).toLocaleString()}</p>
 </div>
 </body>
 </html>
 `;
 
-await page.setContent(html, { waitUntil: 'networkidle0' });
-const pngBuffer = await page.screenshot({ type: 'png', fullPage: false });
+await page.setContent(html);
+const screenshot = '/tmp/fake_tx.png';
+await page.screenshot({ path: screenshot });
 await browser.close();
-return pngBuffer; // bot.js sends this with replyWithPhoto
+
+return screenshot;
 }
 
-// IMPORTANT: default-export the real function your bot requires
-module.exports = generateFakeExplorerPage; // important
-// (and in bot.js use: const generateFakeExplorerPage = require('./fake-explorer.js'))
-
+module.exports = generateFakeExplorerPage;
