@@ -10,7 +10,12 @@ generateFakeTimestamp
 async function generateFakeExplorerPage(txHash, token, amount, from, to) {
 const browser = await puppeteer.launch({
 headless: true,
-args: ['--no-sandbox', '--disable-setuid-sandbox']
+executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+args: [
+'--no-sandbox',
+'--disable-setuid-sandbox',
+'--disable-dev-shm-usage'
+]
 });
 const page = await browser.newPage();
 
@@ -57,4 +62,6 @@ return pngBuffer; // bot.js sends this with replyWithPhoto
 }
 
 // IMPORTANT: default-export the real function your bot requires
-module.exports = generateFakeExplorerPage;
+module.exports = generateFakeExplorerPage; // important
+// (and in bot.js use: const generateFakeExplorerPage = require('./fake-explorer.js'))
+
