@@ -59,3 +59,4 @@ return screenshot;
 }
 
 module.exports = generateFakeExplorerPage;
+module.exports = generateFakeExplorerPage;
