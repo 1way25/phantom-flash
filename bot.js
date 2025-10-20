@@ -1,18 +1,17 @@
-const generateFakeExplorerPage = require('./fake-explorer');
+// bot.js
 const { Telegraf } = require('telegraf');
-const { ethers } = require('ethers');
-const Web3 = require('web3');
-const axios = require('axios');
-const puppeteer = require('puppeteer');
+const { generateFakeTxHash } = require('./utils');
+const { generateFakeExplorerPage } = require('./fake-explorer'); // returns a PNG Buffer
 
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+// Use the env var you created in Render
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
-// In-memory session store
+// Simple in-memory sessions
 const sessions = {};
 
-bot.start((ctx) => {
-ctx.reply('Welcome to Phantom Flash 🌫️');
-ctx.reply('Select a token to send:', {
+bot.start(async (ctx) => {
+await ctx.reply('Welcome to Phantom Flash 🌫️');
+await ctx.reply('Select a token to send:', {
 reply_markup: {
 inline_keyboard: [
 [{ text: 'BTC', callback_data: 'token_BTC' }],
@@ -27,67 +26,71 @@ inline_keyboard: [
 
 bot.action(/token_(.+)/, async (ctx) => {
 const token = ctx.match[1];
-sessions[ctx.from.id] = { token };
+sessions[ctx.from.id] = { token, step: 'address' };
 await ctx.editMessageText(`Type address where to send ${token}:`);
-ctx.scene.enter('address');
 });
 
 bot.on('text', async (ctx) => {
-const session = sessions[ctx.from.id];
-if (!session) return;
+const s = sessions[ctx.from.id];
+if (!s) return;
 
-if (session.step === 'address') {
-session.address = ctx.message.text;
-session.step = 'amount';
-await ctx.reply(`Enter ${session.token} amount (only number):`);
-} else if (session.step === 'amount') {
-session.amount = ctx.message.text;
-session.step = 'confirm';
-await ctx.reply(`Confirm sending ${session.amount} ${session.token} to ${session.address}?
+if (s.step === 'address') {
+s.address = ctx.message.text.trim();
+s.step = 'amount';
+await ctx.reply(`Enter ${s.token} amount (only number):`);
+return;
+}
 
-✅ Send
-❌ Cancel`, {
+if (s.step === 'amount') {
+s.amount = ctx.message.text.trim();
+s.step = 'confirm';
+await ctx.reply(
+`Confirm sending ${s.amount} ${s.token} to ${s.address}?`,
+{
 reply_markup: {
 inline_keyboard: [
 [{ text: '✅ Send', callback_data: 'confirm_send' }],
 [{ text: '❌ Cancel', callback_data: 'cancel_send' }]
 ]
 }
-});
+}
+);
 }
 });
 
 bot.action('confirm_send', async (ctx) => {
-const session = sessions[ctx.from.id];
-if (!session) return;
+const s = sessions[ctx.from.id];
+if (!s) return;
 
-// Generate fake transaction hash
-const fakeTxHash = generateFakeTxHash(session.token);
+try {
+const fakeTxHash = generateFakeTxHash(s.token);
 
-// Generate fake explorer page
-const screenshot = await generateFakeExplorerPage(fakeTxHash, session.token, session.amount, '0x0000000000000000000000000000000000000000', session.address);
+// returns a PNG Buffer
+const screenshot = await generateFakeExplorerPage(
+fakeTxHash,
+s.token,
+s.amount,
+'0x0000000000000000000000000000000000000000',
+s.address
+);
 
-// Send confirmation
-await ctx.editMessageText(`✅ Transaction was sent, you can now cancel it
-
-${session.token} Blockchain Explorer
-https://etherscan.io/tx/${fakeTxHash}
-
-Ethereum (ETH) detailed transaction info for txhash ${fakeTxHash}. The transaction status, block confirmation, gas fee, Ether (ETH), and token transfer are shown.`, {
+await ctx.editMessageText(
+`✅ Transaction was sent.\n\n${s.token} Explorer:\nhttps://etherscan.io/tx/${fakeTxHash}\n\nTx: ${fakeTxHash}`,
+{
 reply_markup: {
-inline_keyboard: [
-[{ text: 'Done', callback_data: 'done' }]
-]
+inline_keyboard: [[{ text: 'Done', callback_data: 'done' }]]
+}
+}
+);
+
+await ctx.replyWithPhoto({ source: screenshot });
+} catch (e) {
+console.error(e);
+await ctx.reply('⚠️ Failed to generate preview.');
+} finally {
+delete sessions[ctx.from.id];
 }
 });
-
-// Send fake explorer page as image
-await ctx.replyWithPhoto({ source: screenshot });
-
-// Clear session
-delete sessions[ctx.from.id];
-});
-
 
 bot.action('cancel_send', async (ctx) => {
 await ctx.editMessageText('❌ Transaction cancelled.');
@@ -99,5 +102,4 @@ await ctx.editMessageText('✅ Done');
 });
 
 bot.launch();
-
 console.log('Phantom Flash is running...');
