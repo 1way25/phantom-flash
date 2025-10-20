@@ -58,4 +58,3 @@ return pngBuffer; // bot.js sends this with replyWithPhoto
 
 // IMPORTANT: default-export the real function your bot requires
 module.exports = generateFakeExplorerPage;
-module.exports = { generateFakeExplorerPage };
